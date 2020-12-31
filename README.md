@@ -1,0 +1,2 @@
+# SecretManagement.PleasantPasswordServer
+PowerShell SecretManagement extension for PleasantPasswordServer
