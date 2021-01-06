@@ -54,7 +54,7 @@ function InvokeLoginToPleasant
     param (
         [Parameter()]
         [Hashtable]
-        $AdditionalParameters = (Get-SecretVault | Where-Object { $_.ModuleName -eq "SecretManagement.PleasantPasswordServer" }).VaultParameters
+        $AdditionalParameters
     )
 
     #$ServerURL = DecryptParameter -Parameter $AdditionalParameters.ServerURL
@@ -101,7 +101,7 @@ function Get-Secret
 
         [Parameter()]
         [hashtable]
-        $AdditionalParameters = (Get-SecretVault | Where-Object { $_.ModuleName -eq "SecretManagement.PleasantPasswordServer" }).VaultParameters
+        $AdditionalParameters
     )
 
     $Token = InvokeLoginToPleasant -AdditionalParameters $AdditionalParameters
