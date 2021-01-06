@@ -15,52 +15,39 @@ function GetSecretFile
     }
 }
 
-function DecryptParameter
-{
-    [CmdletBinding()]
-    param (
-        # Parameter help description
-        [Parameter(Mandatory)]
-        [Securestring]
-        $Parameter
-    )
-
-    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Parameter)
-    $PlainParameter = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-    return $PlainParameter
-}
-
 function InvokeLoginToPleasant
 {
-    ##############################
-    #.SYNOPSIS
-    # Login to Pleasant Password Server
-    #
-    #.DESCRIPTION
-    # Login to Pleasant Password Server
-    #
-    #.PARAMETER AdditionalParameters
-    # The following values need to be in there:
-    #   ServerURL
-    #   Port
-    #   Login as PSCredential Object
-    #
-    #.EXAMPLE
-    #   $Password = ConvertTo-SecureString -String "xxx" -AsPlainText -Force
-    #   $Cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "xxx", $Password
-    #
-    #   $var = @{
-    #      ServerURL = "https://ppsdc1.pps.net"
-    #      Port      = "10001"
-    #      Login     = $Cred
-    #   }
-    #
-    #   InvokeLoginToPleasant -AdditionalParameters $var
-    #
-    #.NOTES
-    #   Author: Constantin Hager
-    #   Date: 2020-12-31
-    ##############################
+
+    <#
+        .SYNOPSIS
+         Login to Pleasant Password Server
+
+        .DESCRIPTION
+         Login to Pleasant Password Server
+
+        .PARAMETER AdditionalParameters
+         The following values need to be in there:
+           ServerURL
+           Port
+           Login as PSCredential Object
+
+        .EXAMPLE
+           $Password = ConvertTo-SecureString -String "xxx" -AsPlainText -Force
+           $Cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "xxx", $Password
+
+           $var = @{
+              ServerURL = "https://ppsdc1.pps.net"
+              Port      = "10001"
+              Login     = $Cred
+           }
+
+           InvokeLoginToPleasant -AdditionalParameters $var
+
+        .NOTES
+           Author: Constantin Hager
+           Date: 2020-12-31
+    #>
+
 
 
     [CmdletBinding()]
