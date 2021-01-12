@@ -25,6 +25,9 @@ task "Clean" {
 }
 
 task Compile {
+
+    New-Item -ItemType Directory -Path $ExtensionPath -Force
+
     Copy-Item -Path (Join-Path -Path $Root -ChildPath "$($ModuleName).psm1") -Destination $PsmPath -Force
     Copy-Item -Path (Join-Path -Path $Root -ChildPath "$($ModuleName).Extension") -Destination $ExtensionPath -Recurse -Force
     Copy-Item -Path (Join-Path -Path $Root -ChildPath "LICENSE") -Destination $LicensePath -Recurse -Force
