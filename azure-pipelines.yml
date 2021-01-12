@@ -65,7 +65,7 @@ stages:
             $dropDirectory = Join-Path -Path $env:SYSTEM_ARTIFACTSDIRECTORY -ChildPath 'drop'
             $ModuleName = $env:BUILD_REPOSITORY_NAME
             $ModuleNameFull = Join-Path $dropDirectory -ChildPath $ModuleName
-            $ModuleNameFull
+            Import-Module -Name $ModuleNameFull -Verbose
         pwsh: true
       env:
         PS_GALLERY_SECRET: $(PSGallery)
