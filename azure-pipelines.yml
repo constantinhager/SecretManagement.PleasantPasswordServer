@@ -64,8 +64,8 @@ stages:
         script: |
             $dropDirectory = Join-Path -Path $env:SYSTEM_ARTIFACTSDIRECTORY -ChildPath 'drop'
             $ModuleNameFull = Join-Path $dropDirectory -ChildPath "SecretManagement.PleasantPasswordServer"
-            Get-ChildItem -Path $ModuleNameFull -Recurse
-            #Install-Module Microsoft.PowerShell.SecretManagement -Force
+            Install-Module Microsoft.PowerShell.SecretManagement -Force
+            Import-Module -Name $ModuleNameFull -Verbose
         pwsh: true
       env:
         PS_GALLERY_SECRET: $(PSGallery)
