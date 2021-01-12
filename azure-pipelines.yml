@@ -1,19 +1,38 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+stages:
+- stage: Build
+  jobs:
+  - job: 'Linux'
 
-trigger:
-- main
+    pool:
+      vmImage: 'ubuntu-latest'
 
-pool:
-  vmImage: 'ubuntu-latest'
+    steps:
+    - task: PowerShell@2
+      inputs:
+          targetType: 'inline'
+          script: |
+            Install-Module -Name InvokeBuild -Force -Verbose -AllowClobber
+          pwsh: true
+      displayName: 'Install InvokeBuild'
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+    - task: PowerShell@2
+      inputs:
+          targetType: 'inline'
+          script: |
+            Invoke-Build -File './build.ps1' -Verbose
+          pwsh: true
+      displayName: 'Build Module'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(Build.Repository.LocalPath)/Release'
+        Contents: '**'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      displayName: 'Copy Release Folder to Staging Directory'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
+      displayName: 'Publish Artifact to Azure DevOps'
