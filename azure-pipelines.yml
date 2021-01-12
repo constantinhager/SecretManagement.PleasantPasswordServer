@@ -66,6 +66,7 @@ stages:
             $ModuleNameFull = Join-Path $dropDirectory -ChildPath "SecretManagement.PleasantPasswordServer"
             Install-Module Microsoft.PowerShell.SecretManagement -Force
             Import-Module -Name $ModuleNameFull -Verbose
+            Publish-Module -Path "$ModuleNameFull" -NuGetApiKey $env:PS_GALLERY_SECRET -Verbose
         pwsh: true
       env:
         PS_GALLERY_SECRET: $(PSGallery)
