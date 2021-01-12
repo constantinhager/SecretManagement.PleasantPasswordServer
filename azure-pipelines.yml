@@ -11,7 +11,7 @@ stages:
       inputs:
           targetType: 'inline'
           script: |
-            Install-Module -Name InvokeBuild -Force -Verbose -AllowClobber
+            Install-Module -Name InvokeBuild -Force -AllowClobber
           pwsh: true
       displayName: 'Install InvokeBuild'
 
@@ -63,10 +63,9 @@ stages:
         targetType: 'inline'
         script: |
             $dropDirectory = Join-Path -Path $env:SYSTEM_ARTIFACTSDIRECTORY -ChildPath 'drop'
-            $ModuleName = $env:BUILD_REPOSITORY_NAME
-            $ModuleNameFull = Join-Path $dropDirectory -ChildPath $ModuleName
-            Install-Module Microsoft.PowerShell.SecretManagement -Force
-            Get-ChildItem $ModuleNameFull -Recurse
+            $ModuleNameFull = Join-Path $dropDirectory -ChildPath "SecretManagement.PleasantPasswordServer"
+            Get-ChildItem -Path $ModuleNameFull -Recurse
+            #Install-Module Microsoft.PowerShell.SecretManagement -Force
         pwsh: true
       env:
         PS_GALLERY_SECRET: $(PSGallery)
