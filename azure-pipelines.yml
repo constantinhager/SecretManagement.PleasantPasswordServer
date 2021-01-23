@@ -1,3 +1,18 @@
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - SecretManagement.PleasantPasswordServer.Extension
+      - SecretManagement.PleasantPasswordServer
+    exclude:
+      - azure-pipelines.yml
+      - .gitignore
+      - LICENSE
+
+pr: none
+
 stages:
 - stage: Build
   jobs:
