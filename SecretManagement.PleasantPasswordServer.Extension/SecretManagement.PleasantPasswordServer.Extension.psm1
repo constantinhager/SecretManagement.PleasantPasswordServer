@@ -32,14 +32,11 @@ function InvokeLoginToPleasant
            Login as PSCredential Object
 
         .EXAMPLE
-           $Password = ConvertTo-SecureString -String "xxx" -AsPlainText -Force
-           $Cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "xxx", $Password
 
-           $var = @{
+            $var = @{
               ServerURL = "https://ppsdc1.pps.net"
               Port      = "10001"
-              Login     = $Cred
-           }
+            }
 
            InvokeLoginToPleasant -AdditionalParameters $var
 
@@ -56,9 +53,6 @@ function InvokeLoginToPleasant
         [Hashtable]
         $AdditionalParameters
     )
-
-    #$ServerURL = DecryptParameter -Parameter $AdditionalParameters.ServerURL
-    #$Port = DecryptParameter -Parameter $AdditionalParameters.Port
 
     $PasswordServerURL = [string]::Concat($AdditionalParameters.ServerURL, ":", $AdditionalParameters.Port)
 
@@ -138,8 +132,25 @@ function Get-Secret
     $Credential = Invoke-RestMethod -Method get -Uri "$PasswordServerURL/api/v5/rest/credential/$id" -Headers $headers -ContentType 'application/json'
     $Password = Invoke-RestMethod -method post -Uri "$PasswordServerURL/api/v5/rest/credential/$id/password" -body (ConvertTo-Json $body) -Headers $headers -ContentType 'application/json'
 
-    $PasswordAsSecureString = ConvertTo-SecureString -String $Password -AsPlainText -Force
-    return [PSCredential]::new($Credential.Username, $PasswordAsSecureString)
+    if ([string]::IsNullOrWhiteSpace($Password))
+    {
+        return
+    }
+    else
+    {
+        $PasswordAsSecureString = ConvertTo-SecureString -String $Password -AsPlainText -Force
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Credential.UserName))
+    {
+        $UserName = "notneeded"
+    }
+    else
+    {
+        $UserName = $Credential.Username
+    }
+
+    return [PSCredential]::new($Username, $PasswordAsSecureString)
 }
 
 function Set-Secret
@@ -173,6 +184,7 @@ function Set-Secret
 
     $RootFolderid = Invoke-RestMethod -Uri "$PasswordServerURL/api/v5/rest/folders/root" -Headers $headers -ContentType 'application/json'
 
+    #TODO: Write Logic if object is no PSCredential
     $body_add = [ordered]@{
         "CustomUserFields"        = @{}
         "CustomApplicationFields" = @{}
