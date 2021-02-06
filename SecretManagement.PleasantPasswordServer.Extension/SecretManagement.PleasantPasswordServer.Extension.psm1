@@ -1,5 +1,29 @@
 using namespace Microsoft.PowerShell.SecretManagement
 
+function Write-VaultError
+{
+    param
+    (
+        [Parameter(Mandatory)]
+        [System.Management.Automation.ErrorRecord]
+        $ErrorRecord
+    )
+
+    <#
+    .SYNOPSIS
+    Takes a terminating error and first writes it as a non-terminating error to the user to better surface the issue.
+    .NOTES
+    This was taken from Justin Grote and his Keepass extension https://github.com/JustinGrote/SecretManagement.KeePass
+    #>
+
+    $lastErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    Write-Error -Message "Vault ${VaultName}: $($ErrorRecord.Exception.Message)"
+    $ErrorActionPreference = $lastErrorActionPreference
+    throw $ErrorRecord
+}
+
+
 function GetSecretFile
 {
     $FilePath = Join-Path -Path $env:TEMP -ChildPath "PleasantCred.xml"
@@ -29,16 +53,12 @@ function InvokeLoginToPleasant
          The following values need to be in there:
            ServerURL
            Port
-           Login as PSCredential Object
 
         .EXAMPLE
-           $Password = ConvertTo-SecureString -String "xxx" -AsPlainText -Force
-           $Cred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList "xxx", $Password
 
            $var = @{
               ServerURL = "https://ppsdc1.pps.net"
               Port      = "10001"
-              Login     = $Cred
            }
 
            InvokeLoginToPleasant -AdditionalParameters $var
@@ -48,17 +68,12 @@ function InvokeLoginToPleasant
            Date: 2020-12-31
     #>
 
-
-
     [CmdletBinding()]
     param (
         [Parameter()]
         [Hashtable]
         $AdditionalParameters
     )
-
-    #$ServerURL = DecryptParameter -Parameter $AdditionalParameters.ServerURL
-    #$Port = DecryptParameter -Parameter $AdditionalParameters.Port
 
     $PasswordServerURL = [string]::Concat($AdditionalParameters.ServerURL, ":", $AdditionalParameters.Port)
 
@@ -71,8 +86,16 @@ function InvokeLoginToPleasant
         password   = $SecretFile.GetNetworkCredential().password;
     }
 
+    $splat = @{
+        Uri         = "$PasswordServerURL/OAuth2/Token"
+        Method      = "POST"
+        Body        = $tokenParams
+        ContentType = "application/x-www-form-urlencoded"
+        ErrorAction = "SilentlyContinue"
+    }
+
     # Authenticate to Pleasant Password Server
-    $JSON = Invoke-WebRequest -Uri "$PasswordServerURL/OAuth2/Token" -Method POST -Body $tokenParams -ContentType "application/x-www-form-urlencoded" -ErrorAction SilentlyContinue
+    $JSON = Invoke-WebRequest @splat
 
     if ($null -eq $JSON)
     {
@@ -103,6 +126,11 @@ function Get-Secret
         [hashtable]
         $AdditionalParameters
     )
+
+    trap
+    {
+        Write-VaultError -ErrorRecord $_
+    }
 
     $Token = InvokeLoginToPleasant -AdditionalParameters $AdditionalParameters
 
@@ -138,8 +166,27 @@ function Get-Secret
     $Credential = Invoke-RestMethod -Method get -Uri "$PasswordServerURL/api/v5/rest/credential/$id" -Headers $headers -ContentType 'application/json'
     $Password = Invoke-RestMethod -method post -Uri "$PasswordServerURL/api/v5/rest/credential/$id/password" -body (ConvertTo-Json $body) -Headers $headers -ContentType 'application/json'
 
-    $PasswordAsSecureString = ConvertTo-SecureString -String $Password -AsPlainText -Force
-    return [PSCredential]::new($Credential.Username, $PasswordAsSecureString)
+    if ([string]::IsNullOrWhiteSpace($Password))
+    {
+        $PasswordAsSecureString = ConvertTo-SecureString -String " " -AsPlainText -Force
+    }
+    else
+    {
+        $PasswordAsSecureString = ConvertTo-SecureString -String $Password -AsPlainText -Force
+    }
+
+    if ([string]::IsNullOrWhiteSpace($Credential.UserName))
+    {
+        $UserName = "notneeded"
+    }
+    else
+    {
+        $UserName = $Credential.Username
+    }
+
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $UserName, $PasswordAsSecureString
+
+    return $Credential
 }
 
 function Set-Secret
@@ -163,6 +210,11 @@ function Set-Secret
         $AdditionalParameters
     )
 
+    trap
+    {
+        Write-VaultError -ErrorRecord $_
+    }
+
     $Token = InvokeLoginToPleasant -AdditionalParameters $AdditionalParameters
     $headers = @{
         "Accept"        = "application/json"
@@ -173,40 +225,66 @@ function Set-Secret
 
     $RootFolderid = Invoke-RestMethod -Uri "$PasswordServerURL/api/v5/rest/folders/root" -Headers $headers -ContentType 'application/json'
 
-    $body_add = [ordered]@{
-        "CustomUserFields"        = @{}
-        "CustomApplicationFields" = @{}
-        "Tags"                    = @()
-        "Name"                    = $Name
-        "UserName"                = $Secret.UserName
-        "Password"                = $Secret.GetNetworkCredential().Password
-        "Url"                     = ""
-        "Notes"                   = ""
-        "GroupId"                 = $RootFolderid
-        "Expires"                 = $null
-    }
 
-    $splat = @{
-        Uri             = "$PasswordServerURL/api/v5/rest/entries/"
-        Method          = 'POST'
-        Body            = (ConvertTo-Json $body_add)
-        Headers         = $headers
-        ContentType     = 'application/json'
-        UseBasicParsing = $true
-    }
-
-    $Response = Invoke-WebRequest @splat
-
-    if ($Response.StatusCode -eq 200)
+    if ($Secret -is [System.Management.Automation.PSCredential])
     {
-        return $true
+        $body_add = [ordered]@{
+            "CustomUserFields"        = @{}
+            "CustomApplicationFields" = @{}
+            "Tags"                    = @()
+            "Name"                    = $Name
+            "UserName"                = $Secret.UserName
+            "Password"                = $Secret.GetNetworkCredential().Password
+            "Url"                     = ""
+            "Notes"                   = ""
+            "GroupId"                 = $RootFolderid
+            "Expires"                 = $null
+        }
     }
-    else
+
+    if ($Secret -is [System.Security.SecureString])
+    {
+        $body_add = [ordered]@{
+            "CustomUserFields"        = @{}
+            "CustomApplicationFields" = @{}
+            "Tags"                    = @()
+            "Name"                    = $Name
+            "UserName"                = ""
+            "Password"                = ConvertFrom-SecureString -SecureString $Secret
+            "Url"                     = ""
+            "Notes"                   = ""
+            "GroupId"                 = $RootFolderid
+            "Expires"                 = $null
+        }
+    }
+
+    if ($null -eq $body_add)
     {
         return $false
     }
-}
+    else
+    {
+        $splat = @{
+            Uri             = "$PasswordServerURL/api/v5/rest/entries/"
+            Method          = 'POST'
+            Body            = (ConvertTo-Json $body_add)
+            Headers         = $headers
+            ContentType     = 'application/json'
+            UseBasicParsing = $true
+        }
 
+        $Response = Invoke-WebRequest @splat
+
+        if ($Response.StatusCode -eq 200)
+        {
+            return $true
+        }
+        else
+        {
+            return $false
+        }
+    }
+}
 function Remove-Secret
 {
     param (
@@ -218,19 +296,15 @@ function Remove-Secret
         [string]
         $VaultName,
 
-        [Parameter(Mandatory)]
-        [ValidateSet('Archive', 'Delete')]
-        [string]
-        $Action,
-
-        [Parameter(Mandatory)]
-        [string]
-        $Comment,
-
         [Parameter()]
         [hashtable]
         $AdditionalParameters
     )
+
+    trap
+    {
+        Write-VaultError -ErrorRecord $_
+    }
 
     $Token = InvokeLoginToPleasant -AdditionalParameters $AdditionalParameters
     $headers = @{
@@ -243,8 +317,8 @@ function Remove-Secret
     }
 
     $body_delete = [ordered]@{
-        "Action"  = "$Action"
-        "Comment" = "$Comment"
+        "Action"  = "Delete"
+        "Comment" = "Deleted through SecretsManagement"
     }
 
     $PasswordServerURL = [string]::Concat($AdditionalParameters.ServerURL, ":", $AdditionalParameters.Port)
@@ -299,6 +373,11 @@ function Get-SecretInfo
         $AdditionalParameters
     )
 
+    trap
+    {
+        Write-VaultError -ErrorRecord $_
+    }
+
     $Token = InvokeLoginToPleasant -AdditionalParameters $AdditionalParameters
     $headers = @{
         "Accept"        = "application/json"
@@ -343,6 +422,11 @@ function Test-SecretVault
         [hashtable]
         $AdditionalParameters
     )
+
+    trap
+    {
+        Write-VaultError -ErrorRecord $_
+    }
 
     $Parameters = @{
         ServerURL = $AdditionalParameters.ServerURL
