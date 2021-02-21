@@ -90,6 +90,24 @@ credentials. Use `New-PleasantCredential`
 
 ## Additional Functions
 
+### Register-PleasantVault
+
+Wraps the functionality of Register-SecretVault to make the module more user friedlier.
+
+#### Parameters
+
+##### [String] VaultName (Not mandatory)
+
+The name of your Pleasant Password Server Vault.
+
+##### [String] ServerURL
+
+The Server URL where the Pleasant Password Server is reachable
+
+##### [String] Port
+
+The Port where the Pleasant Password Server is reachable
+
 ### New-PleasantCredential
 
 Stores the credentials for Pleasant Password Server to disk
