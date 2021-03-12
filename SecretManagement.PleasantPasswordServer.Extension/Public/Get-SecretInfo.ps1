@@ -1,3 +1,5 @@
+using namespace Microsoft.PowerShell.SecretManagement
+using namespace System.Collections.ObjectModel
 function Get-SecretInfo
 {
     param (
@@ -44,9 +46,34 @@ function Get-SecretInfo
         throw "No secret with $Name is found"
     }
 
-    return [Microsoft.PowerShell.SecretManagement.SecretInformation]::new(
+    $Params = @{
+        Method      = 'GET'
+        Uri         = "$PasswordServerURL/api/v5/rest/Entries/$id"
+        Headers     = $headers
+        ContentType = 'application/json'
+    }
+
+    $CredentialMetadata = Invoke-RestMethod @Params
+
+    # TODO: Datemagic
+    # TODO: Only provide Filename and Size
+    # TODO: Return Foldername for GroupID
+    [ReadOnlyDictionary[String, Object]]$metadata = [ordered]@{
+        CustomUserFields = $CredentialMetadata.CustomUserFields
+        Attachments      = $CredentialMetadata.Attachments
+        Tags             = $CredentialMetadata.Tags
+        Url              = $CredentialMetadata.Url
+        Notes            = $CredentialMetadata.Notes
+        Created          = $CredentialMetadata.Created
+        Modified         = $CredentialMetadata.Modified
+        Expires          = $CredentialMetadata.Expires
+
+    } | ConvertTo-ReadOnlyDictionary
+
+    return [SecretInformation]::new(
         $Filter,
         [SecretType]::PSCredential,
-        $VaultName
+        $VaultName,
+        $metadata
     )
 }

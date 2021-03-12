@@ -14,6 +14,10 @@ function Set-Secret
         [string]
         $VaultName,
 
+        [Parameter()]
+        [hashtable]
+        $Metadata,
+
         [Parameter(Mandatory)]
         [hashtable]
         $AdditionalParameters
