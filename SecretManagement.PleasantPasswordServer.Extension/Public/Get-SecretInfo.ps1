@@ -59,13 +59,13 @@ function Get-SecretInfo
 
         $CredentialMetadata = Invoke-RestMethod @Params
 
-        $Params = @{
-            Method      = 'GET'
-            Uri         = "$PasswordServerURL/api/v5/rest/folders/$($CredentialMetadata.GroupId)?recurseLevel=0"
-            Headers     = $headers
-            ContentType = 'application/json'
+        $param = @{
+            ServerURL = $PasswordServerURL
+            Token     = $Token
+            GroupID   = $CredentialMetadata.GroupId
         }
-        $FolderMetadata = Invoke-RestMethod @Params
+
+        $FolderPath = Get-SecretFolder @param
 
         $Name = $CredentialMetadata.Name
 
@@ -75,10 +75,31 @@ function Get-SecretInfo
             Tags             = $CredentialMetadata.Tags
             Url              = $CredentialMetadata.Url
             Notes            = $CredentialMetadata.Notes
-            Created          = [DateTime]$CredentialMetadata.Created
-            Modified         = [DateTime]$CredentialMetadata.Modified
-            Expires          = [DateTime]$CredentialMetadata.Expires
-            FolderName       = $FolderMetadata.Name
+            Created          = if ([string]::IsNullOrWhiteSpace($Credential.Created))
+            {
+                ''
+            }
+            else
+            {
+                [DateTime]$Credential.Created
+            }
+            Modified         = if ([string]::IsNullOrWhiteSpace($Credential.Modified))
+            {
+                ''
+            }
+            else
+            {
+                [DateTime]$Credential.Modified
+            }
+            Expires          = if ([string]::IsNullOrWhiteSpace($Credential.Expires))
+            {
+                ''
+            }
+            else
+            {
+                [DateTime]$Credential.Expires
+            }
+            FolderName       = $FolderPath[0]
         } | ConvertTo-ReadOnlyDictionary
 
         return [SecretInformation]::new(
@@ -90,8 +111,6 @@ function Get-SecretInfo
     }
     else
     {
-        #TODO: Add Folder recursion for retrieving Credentials in subfolders
-
         $Params = @{
             Method      = 'GET'
             Uri         = "$PasswordServerURL/api/v5/rest/folders/"
@@ -101,22 +120,16 @@ function Get-SecretInfo
 
         $AllFolders = Invoke-RestMethod @Params
 
-        [Object[]]$secretInfoResult = foreach ($Credential in $AllFolders)
+        $PPSStructure = Get-Children -Folder $AllFolders
+
+        [Object[]]$secretInfoResult = foreach ($Folder in $PPSStructure)
         {
             # Credentials
-            $AllCredentials = $AllFolders.Credentials
+            $AllCredentials = $Folder.Credentials
 
             foreach ($Credential in $AllCredentials)
             {
                 $Name = $Credential.Name
-
-                $Params = @{
-                    Method      = 'GET'
-                    Uri         = "$PasswordServerURL/api/v5/rest/folders/$($Credential.GroupId)?recurseLevel=0"
-                    Headers     = $headers
-                    ContentType = 'application/json'
-                }
-                $FolderMetadata = Invoke-RestMethod @Params
 
                 [ReadOnlyDictionary[String, Object]]$metadata = [ordered]@{
                     CustomUserFields = $Credential.CustomUserFields
@@ -148,7 +161,7 @@ function Get-SecretInfo
                     {
                         [DateTime]$Credential.Expires
                     }
-                    FolderName       = $FolderMetadata.Name
+                    FolderName       = $Folder.Folder
                 } | ConvertTo-ReadOnlyDictionary
 
                 [SecretInformation]::new(
