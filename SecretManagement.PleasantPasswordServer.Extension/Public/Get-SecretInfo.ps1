@@ -100,6 +100,7 @@ function Get-SecretInfo
                 [DateTime]$Credential.Expires
             }
             FolderName       = $FolderPath[0]
+            Id               = $Folder.FolderID
         } | ConvertTo-ReadOnlyDictionary
 
         return [SecretInformation]::new(
@@ -162,6 +163,7 @@ function Get-SecretInfo
                         [DateTime]$Credential.Expires
                     }
                     FolderName       = $Folder.Folder
+                    Id               = $Folder.FolderID
                 } | ConvertTo-ReadOnlyDictionary
 
                 [SecretInformation]::new(
