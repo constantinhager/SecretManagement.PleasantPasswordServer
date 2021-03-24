@@ -117,3 +117,59 @@ Stores the credentials for Pleasant Password Server to disk
 ##### [PSCredential] Credential
 
 A PSCredential Object with your credentials for your Pleasant Password Server
+
+## Metadata Array
+
+If you want to add or change a secret you can change the following metadata:
+
+| Field Name       | Type         |
+| ---------------- | ------------ |
+| CustomUserFields | Hashtable    |
+| Attachments      | Hashtable    |
+| Tags             | Hashtable    |
+| Name             | String       |
+| Username         | String       |
+| Password         | SecureString |
+| Url              | String       |
+| Notes            | String       |
+| FolderName       | String       |
+| Created          | DateTime     |
+| Modified         | DateTime     |
+| Expires          | DateTime     |
+
+> **You do not have to provide the whole array.**
+> If you want to change the folder of the secret you have to provide
+> the folder before the folder and then the new folder to prevent
+> moving It to the wrong folder.
+
+You can provide this hashtable to `Set-Secret` and `Set-SecretInfo`.
+
+An Example Metadata Array is:
+
+```powershell
+
+$Metadata = @{
+    CustomUserFields =  @{
+        CF2=2
+        CF1=1
+    }
+    Tags             = {
+        @{
+            Name=Tag1
+         },
+        @{
+            Name=Tag2
+         }
+    }
+    Name             = 'MetadataTest'
+    Username         = 'admin'
+    Password         = (ConvertTo-SecureString -Text 'NewPassword' -AsPlainText -Force)
+    Url              = 'http://www.google.de'
+    Notes            = 'This is the metadata test'
+    FolderName       = 'Folder/NewFolder'
+    Created          = (Get-Date)
+    Modified         = (Get-Date)
+    Expires          = (Get-Date)
+}
+
+```
