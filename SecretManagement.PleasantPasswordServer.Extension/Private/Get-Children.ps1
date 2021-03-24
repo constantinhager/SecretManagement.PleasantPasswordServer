@@ -35,6 +35,7 @@ function Get-Children
             # Root Folder + Credentials
             $row = [PSCustomObject]@{
                 Folder      = $Folder.Name
+                FolderID    = $Folder.Id
                 Credentials = $Folder.Credentials
             }
 
@@ -46,6 +47,7 @@ function Get-Children
             # Subfolders + Credentials
             $row = [PSCustomObject]@{
                 Folder      = [string]::Concat($Folder.Name, '/', $subfolder.Name)
+                FolderID    = $subfolder.Id
                 Credentials = $subfolder.Credentials
             }
 
