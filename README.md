@@ -4,11 +4,11 @@ This is a [SecretManagement](https://github.com/PowerShell/SecretManagement) ext
 is built into Pleasant Password Server.
 
 > **NOTE: This is not a maintained project and it's specifically not maintained _by_ the creators of Pleasant Password Server.**
-> **I work on it in my free time because I use Pleasant Password Server in our company.**
+> **I work on it in my free time because I use Pleasant Password Server in my company.**
 
 ## Prerequisites
 
-* [PowerShell](https://github.com/PowerShell/PowerShell)
+* [PowerShell](https://github.com/PowerShell/PowerShell) (It is also usable with PowerShell 5.1)
 * The [SecretManagement](https://github.com/PowerShell/SecretManagement) PowerShell module
 
 You can get the `SecretManagement` module from the PowerShell Gallery:
@@ -117,3 +117,55 @@ Stores the credentials for Pleasant Password Server to disk
 ##### [PSCredential] Credential
 
 A PSCredential Object with your credentials for your Pleasant Password Server
+
+## Metadata Array
+
+If you want to add or change a secret you can change the following metadata:
+
+| Field Name       | Type      |
+| ---------------- | --------- |
+| CustomUserFields | Hashtable |
+| Tags             | Hashtable |
+| Name             | String    |
+| Username         | String    |
+| Password         | String    |
+| Url              | String    |
+| Notes            | String    |
+| FolderName       | String    |
+| Created          | DateTime  |
+| Modified         | DateTime  |
+| Expires          | DateTime  |
+
+> **You do not have to provide the whole array.**
+
+You can provide this hashtable to `Set-Secret` and `Set-SecretInfo`.
+
+An Example Metadata Array is:
+
+```powershell
+
+$Metadata = @{
+    CustomUserFields =  @{
+        CF2=2
+        CF1=1
+    }
+    Tags             = @(
+        @{
+            Name="Tag1"
+         },
+        @{
+            Name="Tag2"
+         }
+    )
+    Name             = 'MetadataTest'
+    Username         = 'admin'
+    Password         = 'Password'
+    Url              = 'http://www.google.de'
+    Notes            = 'This is the metadata test'
+    FolderName       = 'Root/NewFolder'
+    Created          = (Get-Date)
+    Modified         = (Get-Date)
+    Expires          = (Get-Date)
+}
+
+```
