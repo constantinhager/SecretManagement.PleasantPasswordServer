@@ -138,9 +138,7 @@ If you want to add or change a secret you can change the following metadata:
 
 > **You do not have to provide the whole array.**
 
-You can provide this hashtable to `Set-Secret` and `Set-SecretInfo`.
-
-An Example Metadata Array is:
+You can provide this hashtable to `Set-SecretInfo`.
 
 ```powershell
 
@@ -168,4 +166,27 @@ $Metadata = @{
     Expires          = (Get-Date)
 }
 
+```
+
+For `Set-Secret` use the following hastable:
+
+```powershell
+
+$Metadata = @{
+        Url                     = "http://localhost"
+        CustomUserFields        = @{
+            F=1
+            C=2
+        }
+        Tags = @(
+            @{Name="Tag1"}
+            @{Name="Tag2"}
+        )
+
+        Notes                   = "This is another note 1"
+        Created                 = (Get-Date)
+        Modified                = (Get-Date)
+        Expires                 = (Get-Date)
+        FolderName              = "Root/NewFolder"
+}
 ```
