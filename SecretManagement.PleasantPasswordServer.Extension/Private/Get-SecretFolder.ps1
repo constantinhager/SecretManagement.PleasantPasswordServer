@@ -53,5 +53,5 @@ function Get-SecretFolder
 
     $Folderstring = [string]::Concat($FolderMetadata.Name, '/', $FolderString)
     Get-SecretFolder -ServerURL $ServerURL -Token $Token -GroupID $FolderMetadata.ParentId
-    return $Folderstring
+    return $FolderString
 }

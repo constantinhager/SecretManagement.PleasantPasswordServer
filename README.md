@@ -4,11 +4,11 @@ This is a [SecretManagement](https://github.com/PowerShell/SecretManagement) ext
 is built into Pleasant Password Server.
 
 > **NOTE: This is not a maintained project and it's specifically not maintained _by_ the creators of Pleasant Password Server.**
-> **I work on it in my free time because I use Pleasant Password Server in our company.**
+> **I work on it in my free time because I use Pleasant Password Server in my company.**
 
 ## Prerequisites
 
-* [PowerShell](https://github.com/PowerShell/PowerShell)
+* [PowerShell](https://github.com/PowerShell/PowerShell) (It is also usable with PowerShell 5.1)
 * The [SecretManagement](https://github.com/PowerShell/SecretManagement) PowerShell module
 
 You can get the `SecretManagement` module from the PowerShell Gallery:
@@ -122,25 +122,21 @@ A PSCredential Object with your credentials for your Pleasant Password Server
 
 If you want to add or change a secret you can change the following metadata:
 
-| Field Name       | Type         |
-| ---------------- | ------------ |
-| CustomUserFields | Hashtable    |
-| Attachments      | Hashtable    |
-| Tags             | Hashtable    |
-| Name             | String       |
-| Username         | String       |
-| Password         | SecureString |
-| Url              | String       |
-| Notes            | String       |
-| FolderName       | String       |
-| Created          | DateTime     |
-| Modified         | DateTime     |
-| Expires          | DateTime     |
+| Field Name       | Type      |
+| ---------------- | --------- |
+| CustomUserFields | Hashtable |
+| Tags             | Hashtable |
+| Name             | String    |
+| Username         | String    |
+| Password         | String    |
+| Url              | String    |
+| Notes            | String    |
+| FolderName       | String    |
+| Created          | DateTime  |
+| Modified         | DateTime  |
+| Expires          | DateTime  |
 
 > **You do not have to provide the whole array.**
-> If you want to change the folder of the secret you have to provide
-> the folder before the folder and then the new folder to prevent
-> moving It to the wrong folder.
 
 You can provide this hashtable to `Set-Secret` and `Set-SecretInfo`.
 
@@ -153,20 +149,20 @@ $Metadata = @{
         CF2=2
         CF1=1
     }
-    Tags             = {
+    Tags             = @(
         @{
-            Name=Tag1
+            Name="Tag1"
          },
         @{
-            Name=Tag2
+            Name="Tag2"
          }
-    }
+    )
     Name             = 'MetadataTest'
     Username         = 'admin'
-    Password         = (ConvertTo-SecureString -Text 'NewPassword' -AsPlainText -Force)
+    Password         = 'Password'
     Url              = 'http://www.google.de'
     Notes            = 'This is the metadata test'
-    FolderName       = 'Folder/NewFolder'
+    FolderName       = 'Root/NewFolder'
     Created          = (Get-Date)
     Modified         = (Get-Date)
     Expires          = (Get-Date)

@@ -55,13 +55,45 @@ function Set-SecretInfo
         throw "Multiple ambiguous entries found for $Name, please remove the duplicate entry"
     }
 
-    #TODO: If FolderName is there get the id for the folder and write it back to the metadata hashtable
-    #TODO: Compare the current Secret with the metadata array
-    #TODO: If Metadata Array contains the Password convert It back to plaintext
-    #TODO: Write the changes back to the secret
+    # Convert metadata to Json
+    # Add GroupId to Metadata Array
 
-    # Get the folder ID
-    #$FolderId = $PPSStructure | Where-Object { $_.Id -eq $Metadata.FolderName }
+    if($Metadata.ContainsKey("FolderName"))
+    {
+        if($Metadata.FolderName.Split('/').Count -gt 2)
+        {
+            $Split = $Metadata.FolderName.Split('/')
+            $Path1 = $Split[$Split.Length-2]
+            $Path2 = $Split[$Split.Length-1]
+            $FullPath = [string]::Concat($Path1, "/", $Path2)
+        }
+        else
+        {
+            $FullPath = $Metadata.FolderName
+        }
 
+        $FolderID = $PPSStructure | Where-Object {$_.Folder -eq $FullPath} | Select-Object -ExpandProperty FolderID
+        $Metadata.Remove("FolderName")
+    }
+    else
+    {
+        $FolderID = $Secret.GroupId
+    }
+
+    $Metadata.Add("GroupId", "$FolderID")
+    $Metadata.Add("Id", "$($Secret.Id)")
+
+    $JSONString = $Metadata | ConvertTo-Json -Depth 10
+
+    # Patch
+    $Params = @{
+        Method      = 'PATCH'
+        Uri         = "$PasswordServerURL/api/v5/rest/entries/$($Secret.Id)"
+        Headers     = $headers
+        ContentType = 'application/json'
+        Body        = $JSONString
+    }
+
+    Invoke-RestMethod @Params
 
 }
