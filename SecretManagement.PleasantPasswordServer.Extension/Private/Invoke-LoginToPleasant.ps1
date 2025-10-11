@@ -34,9 +34,24 @@ function Invoke-LoginToPleasant
         $AdditionalParameters
     )
 
+    # Check if a login token already exists and is not expired
+    $LoginToken = Get-SecretFile -LoginToken
+    
+    if ($null -ne $LoginToken){
+        if ((get-date) -lt $loginToken.expires){
+            Write-Verbose "Login token is not expired"
+            return $loginToken.access_token
+        } else {
+            Write-Verbose "Login token is expired"
+        }
+    }
+
+    # Get a token if none already exists or it is expired
+    Write-Verbose "Generating new login token"
+    
     $PasswordServerURL = [string]::Concat($AdditionalParameters.ServerURL, ":", $AdditionalParameters.Port)
 
-    $SecretFile = Get-SecretFile
+    $SecretFile = Get-SecretFile -VaultCredential
 
     # Create OAuth2 token params
     $tokenParams = @{
@@ -54,6 +69,7 @@ function Invoke-LoginToPleasant
     }
 
     # Authenticate to Pleasant Password Server
+    Write-Verbose $Splat.uri
     $JSON = Invoke-WebRequest @splat
 
     if ($null -eq $JSON)
@@ -62,10 +78,17 @@ function Invoke-LoginToPleasant
     }
     else
     {
-        # Generate JSON token
-        $Token = (ConvertFrom-Json $JSON.Content).access_token
+        # Generate and store JSON token
+        $token = ConvertFrom-Json $JSON.Content
 
-        return $Token
+        $loginToken = [PSCustomObject]@{
+            access_token = $token.access_token
+            expires      = (Get-Date).AddSeconds($token.expires_in)
+        }
+
+        Out-SecretFile -LoginToken $loginToken
+
+        return $loginToken.access_token
     }
 
 }
