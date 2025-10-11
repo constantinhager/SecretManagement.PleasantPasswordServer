@@ -28,6 +28,11 @@ function Set-Secret
         Write-VaultError -ErrorRecord $_
     }
 
+    # Enable verbose output if directed
+    if ($AdditionalParameters.ContainsKey('Verbose') -and ($AdditionalParameters['Verbose'] -eq $true)) {
+        $VerbosePreference = 'Continue'
+    }
+
     $Token = Invoke-LoginToPleasant -AdditionalParameters $AdditionalParameters
     $headers = @{
         "Accept"        = "application/json"

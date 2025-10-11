@@ -16,6 +16,11 @@ function Test-SecretVault
         Write-VaultError -ErrorRecord $_
     }
 
+    # Enable verbose output if directed
+    if ($AdditionalParameters.ContainsKey('Verbose') -and ($AdditionalParameters['Verbose'] -eq $true)) {
+        $VerbosePreference = 'Continue'
+    }
+
     $Parameters = @{
         ServerURL = $AdditionalParameters.ServerURL
         Port      = $AdditionalParameters.Port
