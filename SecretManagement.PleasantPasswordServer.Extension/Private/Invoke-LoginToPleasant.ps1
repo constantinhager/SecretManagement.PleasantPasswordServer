@@ -66,6 +66,7 @@ function Invoke-LoginToPleasant
         Body        = $tokenParams
         ContentType = "application/x-www-form-urlencoded"
         ErrorAction = "SilentlyContinue"
+        UseBasicParsing = $true
     }
 
     # Authenticate to Pleasant Password Server
